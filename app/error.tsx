@@ -1,0 +1,38 @@
+"use client";
+
+import Link from "next/link";
+import { useEffect } from "react";
+
+export default function ErrorPage({
+  error,
+  reset,
+}: {
+  error: Error & { digest?: string };
+  reset: () => void;
+}) {
+  useEffect(() => {
+    console.error(error);
+  }, [error]);
+
+  return (
+    <div className="mx-auto max-w-md py-20 text-center">
+      <p className="text-xs uppercase tracking-[0.2em] text-lavender">Glitch in the ghost detector</p>
+      <h1 className="display mt-3 text-3xl font-extrabold">Something went sideways.</h1>
+      <p className="mt-3 text-sm text-muted">
+        The page hit a runtime error. Try again, or go back to the analyzer.
+      </p>
+      <div className="mt-6 flex justify-center gap-3">
+        <button
+          type="button"
+          onClick={reset}
+          className="rounded-full bg-mint px-5 py-2.5 text-sm font-semibold text-night"
+        >
+          Try again
+        </button>
+        <Link href="/" className="rounded-full border border-white/15 px-5 py-2.5 text-sm">
+          Home
+        </Link>
+      </div>
+    </div>
+  );
+}

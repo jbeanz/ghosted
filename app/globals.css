@@ -1,0 +1,101 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg: #07060c;
+  --ink: #f6f1ff;
+  --muted: #b8adc9;
+  --mint: #7dffc3;
+  --lavender: #c9b6ff;
+  --rose: #ff7aa2;
+  --gold: #ffd56a;
+  --orange: #ff9b61;
+}
+
+html {
+  background: var(--bg);
+}
+
+body {
+  color: var(--ink);
+  background:
+    radial-gradient(1200px 700px at 80% -10%, rgba(168, 130, 255, 0.22), transparent 55%),
+    radial-gradient(900px 600px at -10% 20%, rgba(125, 255, 195, 0.08), transparent 50%),
+    radial-gradient(800px 500px at 50% 110%, rgba(255, 122, 162, 0.08), transparent 55%),
+    var(--bg);
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  min-height: 100vh;
+}
+
+::selection {
+  background: rgba(125, 255, 195, 0.28);
+  color: #fff;
+}
+
+.display {
+  font-family: var(--font-syne), var(--font-geist-sans), sans-serif;
+}
+
+.glass {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.03));
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.28);
+  backdrop-filter: blur(18px);
+}
+
+.ghost-float {
+  animation: float 5.5s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes pulse-soft {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.fade-up {
+  animation: fade-up 0.7s ease both;
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.delay-1 {
+  animation-delay: 80ms;
+}
+.delay-2 {
+  animation-delay: 160ms;
+}
+.delay-3 {
+  animation-delay: 240ms;
+}
+.delay-4 {
+  animation-delay: 320ms;
+}
+
+input[type="file"] {
+  display: none;
+}
