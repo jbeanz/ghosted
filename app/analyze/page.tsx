@@ -1,12 +1,13 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { PasteBox } from "@/components/analyzer/PasteBox";
 import { Uploader } from "@/components/analyzer/Uploader";
 import { LoadingRitual } from "@/components/results/LoadingRitual";
 import type { Analysis } from "@/lib/analysis";
-import { recordAnalysis } from "@/lib/entitlements";
+import { PaywallTease } from "@/components/results/PaywallTease";
+import { recordAnalysis, usedFreeToday, type LimitCode } from "@/lib/entitlements";
 import type { PreparedImage } from "@/lib/images";
 import { saveAnalysis } from "@/lib/session";
 import { trackEvent } from "@/lib/track";
@@ -20,12 +21,21 @@ export default function AnalyzePage() {
   const [text, setText] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [limitCode, setLimitCode] = useState<LimitCode | null>(null);
 
-  const canSubmit = mode === "screenshots" ? images.length > 0 : text.trim().length > 8;
+  useEffect(() => {
+    if (usedFreeToday()) setLimitCode("daily_free_used");
+  }, []);
+
+  const canSubmit =
+    limitCode !== "daily_free_used" &&
+    limitCode !== "budget_capped" &&
+    (mode === "screenshots" ? images.length > 0 : text.trim().length > 8);
 
   async function analyze() {
     setLoading(true);
     setError(null);
+    setLimitCode(null);
     trackEvent("analyze_submit", {
       mode,
       screenshots: images.length,
@@ -42,13 +52,14 @@ export default function AnalyzePage() {
               : undefined,
         }),
       });
-      let payload: (Analysis & { error?: string }) | null = null;
+      let payload: (Analysis & { error?: string; code?: LimitCode }) | null = null;
       try {
         payload = (await response.json()) as Analysis & { error?: string };
       } catch {
         throw new Error("The analyzer dropped the connection. Try fewer screenshots or paste the text instead.");
       }
       if (!response.ok || !payload) {
+        if (payload?.code) setLimitCode(payload.code);
         throw new Error(payload?.error || "The ghost detector glitched.");
       }
       saveAnalysis(payload);
@@ -107,6 +118,20 @@ export default function AnalyzePage() {
         Analyze Conversation 👻
       </button>
       {error && <p className="mt-3 text-center text-sm text-rose">{error}</p>}
+      {limitCode && (
+        <div className="mt-6">
+          <PaywallTease
+            title={
+              limitCode === "budget_capped"
+                ? "The ghost detector is sleeping"
+                : limitCode === "rate_limited"
+                  ? "Slow down"
+                  : "Come back tomorrow"
+            }
+            body={error ?? undefined}
+          />
+        </div>
+      )}
       <p className="mt-5 text-center text-sm text-muted">
         Your conversations are private. We only analyze what you choose to upload.
       </p>

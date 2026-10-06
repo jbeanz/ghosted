@@ -21,9 +21,22 @@ Open [http://localhost:3000](http://localhost:3000).
 2. Go to [vercel.com/new](https://vercel.com/new) and import the `ghosted` repo.
 3. Add environment variable: `OPENAI_API_KEY` = your OpenAI key.
 4. Deploy. You get a `*.vercel.app` URL immediately.
-5. In the Vercel project: **Analytics → Enable Web Analytics**.
+5. In the Vercel project: **Analytics → Enable Web Analytics**. That is required — the app already sends events, but Vercel will not collect them until you flip this on.
 
 Visitor pageviews, unique users, and custom events (`click_analyze_cta`, `analyze_submit`, `analyze_success`, `share_verdict`) show up there. No accounts required.
+
+## Cost controls
+
+The API will not call OpenAI if any of these trip:
+
+- **1 free analysis per visitor per day** (per person, cookie)
+- **5 analyze requests per IP per hour**
+- **$5 total OpenAI spend per day** across every user, not per person
+- **$20 total OpenAI spend per month** across every user, not per person
+
+The dollar caps are site-wide. Ghosted uses the higher of (a) our running total of all analyses and (b) OpenAI's organization cost API when `OPENAI_ADMIN_KEY` is set.
+
+Set the same **$20 monthly budget** in [OpenAI usage limits](https://platform.openai.com/settings/organization/limits) as a hard backstop.
 
 ## Privacy
 

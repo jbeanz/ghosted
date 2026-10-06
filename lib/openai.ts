@@ -30,7 +30,10 @@ function explainOpenAIError(error: unknown) {
   return "The ghost detector glitched.";
 }
 
-export async function analyzeConversation(input: AnalyzeRequest): Promise<Analysis> {
+export async function analyzeConversation(input: AnalyzeRequest): Promise<{
+  analysis: Analysis;
+  usage: { prompt_tokens?: number; completion_tokens?: number } | undefined;
+}> {
   const apiKey = getApiKey();
 
   const images = input.images ?? [];
@@ -79,7 +82,15 @@ export async function analyzeConversation(input: AnalyzeRequest): Promise<Analys
       throw new Error("The ghost detector came back empty.");
     }
 
-    return validateAnalysis(JSON.parse(raw));
+    return {
+      analysis: validateAnalysis(JSON.parse(raw)),
+      usage: completion.usage
+        ? {
+            prompt_tokens: completion.usage.prompt_tokens,
+            completion_tokens: completion.usage.completion_tokens,
+          }
+        : undefined,
+    };
   } catch (error) {
     throw new Error(explainOpenAIError(error));
   }

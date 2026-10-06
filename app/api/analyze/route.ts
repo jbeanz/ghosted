@@ -1,6 +1,15 @@
 import { NextResponse } from "next/server";
 import { analyzeConversation } from "@/lib/openai";
 import type { AnalyzeRequest } from "@/lib/analysis";
+import {
+  LimitError,
+  assertCanAnalyze,
+  clientIp,
+  cookieHeaders,
+  estimateCostUsd,
+  readCookies,
+  recordSuccessfulAnalysis,
+} from "@/lib/limits";
 
 export const maxDuration = 60;
 export const runtime = "nodejs";
@@ -10,6 +19,13 @@ const MAX_IMAGE_CHARS = 2_400_000;
 
 export async function POST(request: Request) {
   try {
+    const cookies = readCookies(request);
+    const allowed = await assertCanAnalyze({
+      visitorId: cookies.visitorId,
+      cookieFreeDay: cookies.freeDay,
+      ip: clientIp(request),
+    });
+
     const body = (await request.json()) as AnalyzeRequest;
     const text = typeof body.text === "string" ? body.text.trim() : "";
     const images = Array.isArray(body.images) ? body.images.slice(0, MAX_IMAGES) : [];
@@ -36,13 +52,23 @@ export async function POST(request: Request) {
       );
     }
 
-    const analysis = await analyzeConversation({
+    const { analysis, usage } = await analyzeConversation({
       text: text || undefined,
       images: cleanedImages,
     });
 
-    return NextResponse.json(analysis);
+    const costUsd = estimateCostUsd(usage);
+    await recordSuccessfulAnalysis(allowed.visitorId, costUsd);
+
+    const response = NextResponse.json(analysis);
+    for (const cookie of cookieHeaders(allowed.visitorId, allowed.day)) {
+      response.headers.append("Set-Cookie", cookie);
+    }
+    return response;
   } catch (error) {
+    if (error instanceof LimitError) {
+      return NextResponse.json({ error: error.message, code: error.code }, { status: error.status });
+    }
     const message = error instanceof Error ? error.message : "The ghost detector glitched.";
     const status =
       message.includes("OPENAI_API_KEY") || message.includes(".env.local") || message.includes("Couldn't reach OpenAI")
